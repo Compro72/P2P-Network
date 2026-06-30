@@ -8,20 +8,19 @@
   <h2>WebSocket Client</h2>
   <input type="text" id="messageInput" placeholder="Type a message...">
   <button onclick="sendMessage()">Send Message</button>
-  
+
   <h3>Messages:</h3>
   <ul id="messagesList"></ul>
 
   <script>
-    // 1. Establish connection to the server
-    const socket = new WebSocket('ws://localhost:8080');
+    // 🚨 CRITICAL: Change this string to your real Render app URL! 
+    // Example: 'wss://://onrender.com'
+    const socket = new WebSocket('wss://://onrender.com');
 
-    // 2. Event when the connection is open
     socket.onopen = (event) => {
       console.log('Connected to server');
     };
 
-    // 3. Event when a message is received from the server
     socket.onmessage = (event) => {
       const messagesList = document.getElementById('messagesList');
       const listItem = document.createElement('li');
@@ -29,12 +28,11 @@
       messagesList.appendChild(listItem);
     };
 
-    // 4. Function to send messages to the server
     function sendMessage() {
       const input = document.getElementById('messageInput');
       if (input.value) {
         socket.send(input.value);
-        input.value = ''; // clear input
+        input.value = ''; 
       }
     }
   </script>
