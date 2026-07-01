@@ -11,7 +11,7 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
-  console.log('🔗 Client connected');
+  log('Client connected');
   ws.send('Welcome! Connected securely to Render.');
 
   // Change this part in server.js:
@@ -24,7 +24,7 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    console.log('❌ Client disconnected');
+    log('Client disconnected');
   });
 });
 
