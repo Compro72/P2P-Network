@@ -16,7 +16,6 @@ wss.on('connection', (ws) => {
     console.log(`Received: ${messageString}`);
 
     wss.clients.forEach((client) => {
-      // Check if the client connection is open before sending
       if (client.readyState === WebSocket.OPEN) {
         client.send(`Server echoed: ${messageString}`);
       }
