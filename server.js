@@ -3,18 +3,19 @@ const http = require('http');
 
 const PORT = process.env.PORT || 8080;
 
-let res;
+let globalRes;
 
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('WebSocket server is running!');
+  globalRes = res;
+  globalRes.writeHead(200, { 'Content-Type': 'text/plain' });
+  globalRes.end('WebSocket server is running!');
 });
 
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('Client connected');
+  globalRes.writeHead(200, { 'Content-Type': 'text/plain' });
+  globalRes.end('Client connected');
   
   console.log('Client connected');
   ws.send('Welcome! Connected securely to Render.');
