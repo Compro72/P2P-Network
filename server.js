@@ -20,7 +20,7 @@ ws.on('message', (message, isBinary) => {
   const messageString = isBinary ? message : message.toString();
   
   console.log(`Received: ${messageString}`);
-  ws.send(`Server echoed: ${"hello".split("").reverse().join("")}`);
+  ws.send(`Server echoed: ${messageString.split("").reverse().join("")}`);
 });
 
   ws.on('close', () => {
