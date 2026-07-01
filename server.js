@@ -14,19 +14,19 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
-  globalRes.writeHead(200, { 'Content-Type': 'text/plain' });
-  globalRes.end('Client connected');
-  
-  console.log('Client connected');
   ws.send('Welcome! Connected securely to Render.');
 
-  // Change this part in server.js:
   ws.on('message', (message, isBinary) => {
-    // Convert the Buffer to a readable string if it's text
     const messageString = isBinary ? message : message.toString();
     
     console.log(`Received: ${messageString}`);
-    ws.send(`Server echoed: ${messageString.split("").reverse().join("")}`);
+
+    wss.clients.forEach((client) => {
+      // Check if the client connection is open before sending
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(`Server echoed: ${messageString.split("").reverse().join("")}`);
+      }
+    });
   });
 
   ws.on('close', () => {
