@@ -14,10 +14,14 @@ wss.on('connection', (ws) => {
   console.log('🔗 Client connected');
   ws.send('Welcome! Connected securely to Render.');
 
-  ws.on('message', (message) => {
-    console.log(`Received: ${message}`);
-    ws.send(`Server echoed: ${message}`);
-  });
+// Change this part in server.js:
+ws.on('message', (message, isBinary) => {
+  // Convert the Buffer to a readable string if it's text
+  const messageString = isBinary ? message : message.toString();
+  
+  console.log(`Received: ${messageString}`);
+  ws.send(`Server echoed: ${messageString}`);
+});
 
   ws.on('close', () => {
     console.log('❌ Client disconnected');
