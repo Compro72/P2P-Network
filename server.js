@@ -3,13 +3,7 @@ const http = require('http');
 
 const PORT = process.env.PORT || 8080;
 
-let globalRes;
-
-const server = http.createServer((req, res) => {
-  globalRes = res;
-  globalRes.writeHead(200, { 'Content-Type': 'text/plain' });
-  globalRes.end('WebSocket server is running!');
-});
+const server = http.createServer();
 
 const wss = new WebSocket.Server({ server });
 
