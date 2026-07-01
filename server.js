@@ -11,7 +11,7 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
-  log('Client connected');
+  console.log('Client connected');
   ws.send('Welcome! Connected securely to Render.');
 
   // Change this part in server.js:
@@ -19,15 +19,18 @@ wss.on('connection', (ws) => {
     // Convert the Buffer to a readable string if it's text
     const messageString = isBinary ? message : message.toString();
     
-    log(`Received: ${messageString}`);
+    console.log(`Received: ${messageString}`);
     ws.send(`Server echoed: ${messageString.split("").reverse().join("")}`);
   });
 
   ws.on('close', () => {
-    log('Client disconnected');
+    console.log('Client disconnected');
   });
 });
 
 server.listen(PORT, () => {
   console.log(`🚀 Server is listening on port ${PORT}`);
 });
+
+
+
