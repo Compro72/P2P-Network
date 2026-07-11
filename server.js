@@ -10,17 +10,10 @@ wss.on("connection", (ws) => {
   ws.on("message", (message, isBinary) => {
     try {
       const messageString = isBinary ? message : message.toString();
-      const received = JSON.parse(messageString);
-
-      if (!received.targetPeerId) return;
 
       wss.clients.forEach((client) => {
-        if (client.id === received.targetPeerId && client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            type: received.type,
-            message: received.message,
-            targetPeerId: ws.id
-          }));
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(messageString);
         }
       });
 
