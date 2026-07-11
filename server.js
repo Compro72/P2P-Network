@@ -7,24 +7,6 @@ const server = http.createServer();
 const wss = new WebSocket.Server({ server });
 
 wss.on("connection", (ws) => {
-  ws.id = crypto.randomUUID();
-
-  wss.clients.forEach((client) => {
-    if (client !== ws && client.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: "role",
-        message: "initiator",
-        targetPeerId: client.id
-      }));
-
-      client.send(JSON.stringify({
-        type: "role",
-        message: "answerer",
-        targetPeerId: ws.id
-      }));
-    }
-  });
-
   ws.on("message", (message, isBinary) => {
     try {
       const messageString = isBinary ? message : message.toString();
