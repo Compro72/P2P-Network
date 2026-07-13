@@ -13,38 +13,38 @@ wss.on("connection", (ws) => {
     message: ws.id
   }));
 
-  wss.clients.forEach((client) => {
-    if (client !== ws && client.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: "role",
-        message: "initiator",
-        remoteId: client.id
-      }));
-
-      client.send(JSON.stringify({
-        type: "role",
-        message: "answerer",
-        remoteId: ws.id
-      }));
-    }
-  });
-
   ws.on("message", (message, isBinary) => {
     try {
       const messageString = isBinary ? message : message.toString();
       const received = JSON.parse(messageString);
 
-      if (!received.remoteId) return;
-
-      wss.clients.forEach((client) => {
-        if (client.id === received.remoteId && client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            type: received.type,
-            message: received.message,
-            remoteId: ws.id
-          }));
-        }
-      });
+      if(received.type == "connectAll") {
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: "role",
+              message: "initiator",
+              remoteId: client.id
+            }));
+      
+            client.send(JSON.stringify({
+              type: "role",
+              message: "answerer",
+              remoteId: ws.id
+            }));
+          }
+        });
+      } else {
+        wss.clients.forEach((client) => {
+          if (client.id === received.remoteId && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: received.type,
+              message: received.message,
+              remoteId: ws.id
+            }));
+          }
+        });
+      }
 
     } catch (error) {
       console.error("Error handling signal message:", error);
