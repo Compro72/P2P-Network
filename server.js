@@ -8,19 +8,23 @@ const wss = new WebSocket.Server({ server });
 
 wss.on("connection", (ws) => {
   ws.id = crypto.randomUUID();
+  ws.send(JSON.stringify({     
+    type: "id",
+    message: ws.id
+  }));
 
   wss.clients.forEach((client) => {
     if (client !== ws && client.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({
         type: "role",
         message: "initiator",
-        targetPeerId: client.id
+        remoteId: client.id
       }));
 
       client.send(JSON.stringify({
         type: "role",
         message: "answerer",
-        targetPeerId: ws.id
+        remoteId: ws.id
       }));
     }
   });
@@ -30,14 +34,14 @@ wss.on("connection", (ws) => {
       const messageString = isBinary ? message : message.toString();
       const received = JSON.parse(messageString);
 
-      if (!received.targetPeerId) return;
+      if (!received.remoteId) return;
 
       wss.clients.forEach((client) => {
-        if (client.id === received.targetPeerId && client.readyState === WebSocket.OPEN) {
+        if (client.id === received.remoteId && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
             type: received.type,
             message: received.message,
-            targetPeerId: ws.id
+            remoteId: ws.id
           }));
         }
       });
@@ -52,7 +56,7 @@ wss.on("connection", (ws) => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
           type: "peerLeft",
-          targetPeerId: ws.id
+          remoteId: ws.id
         }));
       }
     });
