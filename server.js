@@ -1,68 +1,72 @@
-const WebSocket = require("ws");
-const http = require("http");
-const crypto = require("crypto");
+const WebSocket = require('ws');
+const crypto = require('crypto');
 
-const PORT = process.env.PORT || 8080;
-const server = http.createServer();
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ port: 8080 });
 
-wss.on("connection", (ws) => {
-  ws.id = crypto.randomUUID();
-  ws.send(JSON.stringify({     
-    type: "id",
-    message: ws.id
-  }));
+const activePlayers = new Map(); 
 
-  ws.on("message", (message, isBinary) => {
-    try {
-      const messageString = isBinary ? message : message.toString();
-      const received = JSON.parse(messageString);
+wss.on('connection', (ws) => {
+    ws.id = crypto.randomUUID();
+    activePlayers.set(ws.id, ws);
+    console.log(`Player connected: ${ws.id}`);
 
-      if(received.type == "connectAll") {
-        wss.clients.forEach((client) => {
-          if (client !== ws && client.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-              type: "role",
-              message: "initiator",
-              remoteId: client.id
-            }));
-      
-            client.send(JSON.stringify({
-              type: "role",
-              message: "answerer",
-              remoteId: ws.id
-            }));
-          }
-        });
-      } else {
-        wss.clients.forEach((client) => {
-          if (client.id === received.remoteId && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-              type: received.type,
-              message: received.message,
-              remoteId: ws.id
-            }));
-          }
-        });
-      }
+    ws.send(JSON.stringify({     
+        type: "id",
+        message: ws.id
+    }));
 
-    } catch (error) {
-      console.error("Error handling signal message:", error);
-    }
-  });
+    ws.on('message', (message, isBinary) => {
+        try {
+            const messageString = isBinary ? message : message.toString();
+            const received = JSON.parse(messageString);
 
-  ws.on("close", () => {
-    wss.clients.forEach((client) => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          type: "peerLeft",
-          remoteId: ws.id
-        }));
-      }
+            if (received.type === "connectAll") {
+                console.log(`Player ${ws.id} requested matchmaking.`);
+                
+                activePlayers.forEach((client, clientId) => {
+                    if (clientId !== ws.id && client.readyState === WebSocket.OPEN) {
+                        
+                        console.log(`Pairing new player ${ws.id} with existing player ${clientId}`);
+                        
+                        ws.send(JSON.stringify({
+                            type: "role",
+                            message: "initiator",
+                            remoteId: clientId
+                        }));
+
+                        client.send(JSON.stringify({
+                            type: "role",
+                            message: "answerer",
+                            remoteId: ws.id
+                        }));
+                    }
+                });
+                return;
+            }
+
+            if (!received.remoteId) return;
+            const targetClient = activePlayers.get(received.remoteId);
+
+            if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+                targetClient.send(JSON.stringify({
+                    type: received.type,
+                    message: received.message,
+                    remoteId: ws.id
+                }));
+            }
+
+        } catch (error) {
+            console.error("Error routing signaling message:", error);
+        }
     });
-  });
-});
 
-server.listen(PORT, () => {
-  console.log(`🚀 Mesh Signaling Server listening on port ${PORT}`);
+    ws.on('close', () => {
+        console.log(`Player disconnected natively: ${ws.id}`);
+        activePlayers.delete(ws.id);
+    });
+
+    ws.on('error', (err) => {
+        console.error(`Socket error on player ${ws.id}:`, err);
+        activePlayers.delete(ws.id);
+    });
 });
