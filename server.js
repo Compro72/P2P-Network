@@ -20,6 +20,15 @@ wss.on("connection", (ws, req) => {
                     roomMap.delete(received.id);
                     if(roomMap.size == 0) {
                         rooms.delete(roomId);
+
+                        wss.clients.forEach((client) => {
+                          if (client.readyState == WebSocket.OPEN) {
+                            client.send(JSON.stringify({
+                                type: "roomClosed",
+                                roomId: ws.roomId
+                            }));
+                          }
+                        });
                     }
                 }
             });
@@ -78,6 +87,15 @@ wss.on("connection", (ws, req) => {
             rooms.get(ws.roomId).delete(ws.id);
             if(rooms.get(ws.roomId).size == 0) {
                 rooms.delete(ws.roomId);
+
+                wss.clients.forEach((client) => {
+                  if (client.readyState == WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        type: "roomClosed",
+                        roomId: ws.roomId
+                    }));
+                  }
+                });
             }
         }
     });
@@ -87,6 +105,15 @@ wss.on("connection", (ws, req) => {
             rooms.get(ws.roomId).delete(ws.id);
             if(rooms.get(ws.roomId).size == 0) {
                 rooms.delete(ws.roomId);
+
+                wss.clients.forEach((client) => {
+                  if (client.readyState == WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        type: "roomClosed",
+                        roomId: ws.roomId
+                    }));
+                  }
+                });
             }
         }
     });
