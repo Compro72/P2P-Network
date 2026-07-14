@@ -25,7 +25,7 @@ wss.on("connection", (ws, req) => {
                           if (client.readyState == WebSocket.OPEN) {
                             client.send(JSON.stringify({
                                 type: "roomClosed",
-                                roomId: ws.roomId
+                                roomId: roomId
                             }));
                           }
                         });
