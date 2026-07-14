@@ -22,22 +22,25 @@ wss.on("connection", (ws, req) => {
             ws.id = received.id;
             
         } else if (received.type == "createRoom") {
-            let roomId = crypto.randomUUID();
-            rooms.set(roomId, new Map());
-            rooms.get(roomId).set(ws.id, ws);
+            ws.roomId = crypto.randomUUID();
+            rooms.set(ws.roomId, new Map());
+            rooms.get(ws.roomId).set(ws.id, ws);
 
             wss.clients.forEach((client) => {
               if (client != ws && client.readyState == WebSocket.OPEN) {
                 client.send(JSON.stringify({
                     type: "roomCreated",
-                    roomId: roomId
+                    roomId: ws.roomId
                 }));
               }
             });
             
         } else if (received.type == "connectRoom") {
-            rooms.get(received.roomId).forEach((client, clientId) => {
-                if (clientId !== ws.id && client.readyState === WebSocket.OPEN) {
+            ws.roomId = received.roomId;
+            rooms.get(ws.roomId).set(ws.id, ws);
+            
+            rooms.get(ws.roomId).forEach((client, clientId) => {
+                if (clientId !== ws.id && client.readyState == WebSocket.OPEN) {
                     ws.send(JSON.stringify({
                         type: "role",
                         role: "initiator",
@@ -62,14 +65,14 @@ wss.on("connection", (ws, req) => {
     });
 
     ws.on("close", () => {
-        if (activePlayers.get(ws.id) === ws) {
-            activePlayers.delete(ws.id);
+        if (rooms.get(ws.roomId).get(ws.id) === ws) {
+            rooms.get(ws.roomId).delete(ws.id);
         }
     });
 
     ws.on("error", (err) => {
-        if (activePlayers.get(ws.id) === ws) {
-            activePlayers.delete(ws.id);
+        if (rooms.get(ws.roomId).get(ws.id) === ws) {
+            rooms.get(ws.roomId).delete(ws.id);
         }
     });
 });
