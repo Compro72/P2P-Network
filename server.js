@@ -47,13 +47,15 @@ wss.on("connection", (ws, req) => {
             rooms.get(ws.roomId).forEach((client, clientId) => {
                 if (clientId !== ws.id && client.readyState == WebSocket.OPEN) {
                     ws.send(JSON.stringify({
-                        type: "role",
+                        type: "peerMessage",
+                        peerMessageType: "role",
                         role: "initiator",
                         remoteId: clientId
                     }));
 
                     client.send(JSON.stringify({
-                        type: "role",
+                        type: "peerMessage",
+                        peerMessageType: "role",
                         role: "answerer",
                         remoteId: ws.id
                     }));
