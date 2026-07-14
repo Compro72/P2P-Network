@@ -12,14 +12,14 @@ wss.on("connection", (ws, req) => {
         let received = JSON.parse(messageString);
 
         if (received.type == "initId") {
-            rooms.forEach((roomMap) => {
+            rooms.forEach((roomMap, roomId) => {
                 if (roomMap.has(received.id)) {
                     let oldWs = roomMap.get(received.id);
                     
                     oldWs.terminate(); 
                     roomMap.delete(received.id);
                     if(roomMap.size == 0) {
-                        rooms.delete(ws.roomId);
+                        rooms.delete(roomId);
                     }
                 }
             });
