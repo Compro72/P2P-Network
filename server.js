@@ -7,6 +7,12 @@ let wss = new WebSocket.Server({ port: 8080 });
 let rooms = new Map();
 
 wss.on("connection", (ws, req) => {
+    rooms.forEach((roomMap, roomId) => {
+        ws.send(JSON.stringify({
+            type: "roomCreated",
+            roomId: roomId
+        }));
+    });
     ws.on("message", (message, isBinary) => {
         let messageString = isBinary ? message : message.toString();
         let received = JSON.parse(messageString);
