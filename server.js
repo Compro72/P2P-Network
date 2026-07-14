@@ -12,12 +12,14 @@ wss.on("connection", (ws, req) => {
         const received = JSON.parse(messageString);
 
         if (received.type == "initId") {
-            if (activePlayers.has(received.id)) {
-                const oldWs = activePlayers.get(received.id);
-                
-                oldWs.terminate(); 
-                activePlayers.delete(received.id);
-            }
+            rooms.forEach((roomMap) => {
+                if (roomMap.has(received.id)) {
+                    const oldWs = roomMap.get(received.id);
+                    
+                    oldWs.terminate(); 
+                    roomMap.delete(received.id);
+                }
+            });
         
             ws.id = received.id;
             
@@ -56,7 +58,7 @@ wss.on("connection", (ws, req) => {
             });
             
         } else if (received.type == "peerMessage") {
-            const targetClient = activePlayers.get(received.targetId);
+            const targetClient = rooms.get(ws.roomId).get(received.targetId);
     
             if (targetClient && targetClient.readyState === WebSocket.OPEN) {
                 targetClient.send(messageString);
