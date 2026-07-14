@@ -26,20 +26,27 @@ wss.on("connection", (ws, req) => {
             rooms.set(roomId, new Map());
             rooms.get(roomId).set(ws.id, ws);
 
-            // TODO
+            wss.clients.forEach((client) => {
+              if (client != ws && client.readyState == WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                    type: "roomCreated",
+                    roomId: roomId
+                }));
+              }
+            });
             
         } else if (received.type == "connectRoom") {
             rooms.get(received.roomId).forEach((client, clientId) => {
                 if (clientId !== ws.id && client.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({
                         type: "role",
-                        message: "initiator",
+                        role: "initiator",
                         remoteId: clientId
                     }));
 
                     client.send(JSON.stringify({
                         type: "role",
-                        message: "answerer",
+                        role: "answerer",
                         remoteId: ws.id
                     }));
                 }
