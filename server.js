@@ -18,6 +18,9 @@ wss.on("connection", (ws, req) => {
                     
                     oldWs.terminate(); 
                     roomMap.delete(received.id);
+                    if(roomMap.size == 0) {
+                        rooms.delete(ws.roomId);
+                    }
                 }
             });
         
