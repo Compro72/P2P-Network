@@ -70,19 +70,19 @@ wss.on("connection", (ws, req) => {
 
     ws.on("close", () => {
         if (ws.roomId && rooms.has(ws.roomId)) {
+            rooms.get(ws.roomId).delete(ws.id);
             if(rooms.get(ws.roomId).size == 0) {
                 rooms.delete(ws.roomId);
             }
-            rooms.get(ws.roomId).delete(ws.id);
         }
     });
 
     ws.on("error", (err) => {
         if (ws.roomId && rooms.has(ws.roomId)) {
+            rooms.get(ws.roomId).delete(ws.id);
             if(rooms.get(ws.roomId).size == 0) {
                 rooms.delete(ws.roomId);
             }
-            rooms.get(ws.roomId).delete(ws.id);
         }
     });
 });
