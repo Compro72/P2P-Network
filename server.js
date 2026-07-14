@@ -32,7 +32,7 @@ wss.on("connection", (ws, req) => {
             rooms.get(ws.roomId).set(ws.id, ws);
 
             wss.clients.forEach((client) => {
-              if (client != ws && client.readyState == WebSocket.OPEN) {
+              if (client.readyState == WebSocket.OPEN) {
                 client.send(JSON.stringify({
                     type: "roomCreated",
                     roomId: ws.roomId
