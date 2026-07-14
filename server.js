@@ -1,20 +1,20 @@
-const WebSocket = require("ws");
-const crypto = require("crypto");
-const url = require("url");
+let WebSocket = require("ws");
+let crypto = require("crypto");
+let url = require("url");
 
-const wss = new WebSocket.Server({ port: 8080 });
+let wss = new WebSocket.Server({ port: 8080 });
 
 let rooms = new Map();
 
 wss.on("connection", (ws, req) => {
     ws.on("message", (message, isBinary) => {
-        const messageString = isBinary ? message : message.toString();
-        const received = JSON.parse(messageString);
+        let messageString = isBinary ? message : message.toString();
+        let received = JSON.parse(messageString);
 
         if (received.type == "initId") {
             rooms.forEach((roomMap) => {
                 if (roomMap.has(received.id)) {
-                    const oldWs = roomMap.get(received.id);
+                    let oldWs = roomMap.get(received.id);
                     
                     oldWs.terminate(); 
                     roomMap.delete(received.id);
@@ -58,22 +58,25 @@ wss.on("connection", (ws, req) => {
             });
             
         } else if (received.type == "peerMessage") {
-            const targetClient = rooms.get(ws.roomId).get(received.targetId);
-    
-            if (targetClient && targetClient.readyState === WebSocket.OPEN) {
-                targetClient.send(messageString);
+            let roomMap = rooms.get(ws.roomId);
+            if(roomMap) {
+                let targetClient = roomMap.get(received.targetId);
+        
+                if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+                    targetClient.send(messageString);
+                }
             }
         }
     });
 
     ws.on("close", () => {
-        if (rooms.get(ws.roomId).get(ws.id) === ws) {
+        if (ws.roomId && rooms.has(ws.roomId)) {
             rooms.get(ws.roomId).delete(ws.id);
         }
     });
 
     ws.on("error", (err) => {
-        if (rooms.get(ws.roomId).get(ws.id) === ws) {
+        if (ws.roomId && rooms.has(ws.roomId)) {
             rooms.get(ws.roomId).delete(ws.id);
         }
     });
