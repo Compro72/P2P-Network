@@ -58,9 +58,8 @@ wss.on("connection", (ws, req) => {
             });
             
         } else if (received.type == "peerMessage") {
-            let roomMap = rooms.get(ws.roomId);
-            if(roomMap) {
-                let targetClient = roomMap.get(received.targetId);
+            if(ws.roomId && rooms.has(ws.roomId)) {
+                let targetClient = rooms.get(ws.roomId).get(received.targetId);
         
                 if (targetClient && targetClient.readyState === WebSocket.OPEN) {
                     targetClient.send(messageString);
@@ -71,12 +70,18 @@ wss.on("connection", (ws, req) => {
 
     ws.on("close", () => {
         if (ws.roomId && rooms.has(ws.roomId)) {
+            if(rooms.get(ws.roomId).size == 0) {
+                rooms.delete(ws.roomId);
+            }
             rooms.get(ws.roomId).delete(ws.id);
         }
     });
 
     ws.on("error", (err) => {
         if (ws.roomId && rooms.has(ws.roomId)) {
+            if(rooms.get(ws.roomId).size == 0) {
+                rooms.delete(ws.roomId);
+            }
             rooms.get(ws.roomId).delete(ws.id);
         }
     });
