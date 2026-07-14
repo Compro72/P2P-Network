@@ -20,10 +20,13 @@ wss.on("connection", (ws, req) => {
             }
         
             ws.id = received.id;
-            activePlayers.set(ws.id, ws);
             
         } else if (received.type == "createRoom") {
-            rooms.set()
+            let roomId = crypto.randomUUID();
+            rooms.set(roomId, new Map());
+            rooms.get(roomId).set(ws.id, ws);
+
+            // TODO
             
         } else if (received.type == "connectRoom") {
             rooms.get(received.roomId).forEach((client, clientId) => {
