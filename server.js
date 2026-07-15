@@ -36,6 +36,7 @@ wss.on("connection", (ws, req) => {
             roomId: roomId
         }));
     });
+
     ws.on("message", (message, isBinary) => {
         let messageString = isBinary ? message : message.toString();
         let received = JSON.parse(messageString);
@@ -66,8 +67,8 @@ wss.on("connection", (ws, req) => {
             ws.id = received.id;
 
         } else if (received.type == "createRoom") {
-            if (!ws.id) return;
-            
+            if (!ws.id) return; 
+
             if (!ws.roomId) {
                 ws.roomId = crypto.randomUUID();
                 rooms.set(ws.roomId, new Map());
@@ -84,8 +85,8 @@ wss.on("connection", (ws, req) => {
             }
 
         } else if (received.type == "connectRoom") {
-            if (!ws.id) return;
-            
+            if (!ws.id || !rooms.has(received.roomId)) return;
+
             if (!ws.roomId) {
                 ws.roomId = received.roomId;
                 rooms.get(ws.roomId).set(ws.id, ws);
@@ -110,6 +111,8 @@ wss.on("connection", (ws, req) => {
             }
 
         } else if (received.type == "disconnectRoom") {
+            if (!ws.id) return;
+
             if (ws.roomId && rooms.has(ws.roomId)) {
                 handleDisconnect(ws);
                 delete ws.roomId;
