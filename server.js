@@ -39,7 +39,13 @@ wss.on("connection", (ws, req) => {
 
     ws.on("message", (message, isBinary) => {
         let messageString = isBinary ? message : message.toString();
-        let received = JSON.parse(messageString);
+        
+        let received;
+        try {
+            received = JSON.parse(messageString);
+        } catch (e) {
+            return;
+        }
 
         if (received.type == "initId") {
             rooms.forEach((roomMap, roomId) => {
