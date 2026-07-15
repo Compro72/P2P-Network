@@ -21,45 +21,45 @@ wss.on("connection", (ws, req) => {
             rooms.forEach((roomMap, roomId) => {
                 if (roomMap.has(received.id)) {
                     let oldWs = roomMap.get(received.id);
-                    
-                    oldWs.terminate(); 
+
+                    oldWs.terminate();
                     roomMap.delete(received.id);
-                    if(roomMap.size == 0) {
+                    if (roomMap.size == 0) {
                         rooms.delete(roomId);
 
                         wss.clients.forEach((client) => {
-                          if (client.readyState == WebSocket.OPEN) {
-                            client.send(JSON.stringify({
-                                type: "roomClosed",
-                                roomId: roomId,
-                                hello: "hello"
-                            }));
-                          }
+                            if (client.readyState == WebSocket.OPEN) {
+                                client.send(JSON.stringify({
+                                    type: "roomClosed",
+                                    roomId: roomId,
+                                    hello: "hello"
+                                }));
+                            }
                         });
                     }
                 }
             });
-        
+
             ws.id = received.id;
-            
+
         } else if (received.type == "createRoom") {
             ws.roomId = crypto.randomUUID();
             rooms.set(ws.roomId, new Map());
             rooms.get(ws.roomId).set(ws.id, ws);
 
             wss.clients.forEach((client) => {
-              if (client.readyState == WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                    type: "roomCreated",
-                    roomId: ws.roomId
-                }));
-              }
+                if (client.readyState == WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        type: "roomCreated",
+                        roomId: ws.roomId
+                    }));
+                }
             });
-            
+
         } else if (received.type == "connectRoom") {
             ws.roomId = received.roomId;
             rooms.get(ws.roomId).set(ws.id, ws);
-            
+
             rooms.get(ws.roomId).forEach((client, clientId) => {
                 if (clientId !== ws.id && client.readyState == WebSocket.OPEN) {
                     ws.send(JSON.stringify({
@@ -77,11 +77,15 @@ wss.on("connection", (ws, req) => {
                     }));
                 }
             });
-            
+
+        } else if (received.type == "disconnectRoom") {
+            rooms.get(ws.roomId).delete(ws.id);
+            delete ws.roomId;
+
         } else if (received.type == "peerMessage") {
-            if(ws.roomId && rooms.has(ws.roomId)) {
+            if (ws.roomId && rooms.has(ws.roomId)) {
                 let targetClient = rooms.get(ws.roomId).get(received.targetId);
-        
+
                 if (targetClient && targetClient.readyState === WebSocket.OPEN) {
                     targetClient.send(messageString);
                 }
@@ -92,16 +96,16 @@ wss.on("connection", (ws, req) => {
     ws.on("close", () => {
         if (ws.roomId && rooms.has(ws.roomId)) {
             rooms.get(ws.roomId).delete(ws.id);
-            if(rooms.get(ws.roomId).size == 0) {
+            if (rooms.get(ws.roomId).size == 0) {
                 rooms.delete(ws.roomId);
 
                 wss.clients.forEach((client) => {
-                  if (client.readyState == WebSocket.OPEN) {
-                    client.send(JSON.stringify({
-                        type: "roomClosed",
-                        roomId: ws.roomId
-                    }));
-                  }
+                    if (client.readyState == WebSocket.OPEN) {
+                        client.send(JSON.stringify({
+                            type: "roomClosed",
+                            roomId: ws.roomId
+                        }));
+                    }
                 });
             }
         }
@@ -110,16 +114,16 @@ wss.on("connection", (ws, req) => {
     ws.on("error", (err) => {
         if (ws.roomId && rooms.has(ws.roomId)) {
             rooms.get(ws.roomId).delete(ws.id);
-            if(rooms.get(ws.roomId).size == 0) {
+            if (rooms.get(ws.roomId).size == 0) {
                 rooms.delete(ws.roomId);
 
                 wss.clients.forEach((client) => {
-                  if (client.readyState == WebSocket.OPEN) {
-                    client.send(JSON.stringify({
-                        type: "roomClosed",
-                        roomId: ws.roomId
-                    }));
-                  }
+                    if (client.readyState == WebSocket.OPEN) {
+                        client.send(JSON.stringify({
+                            type: "roomClosed",
+                            roomId: ws.roomId
+                        }));
+                    }
                 });
             }
         }
