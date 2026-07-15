@@ -79,10 +79,13 @@ wss.on("connection", (ws, req) => {
                 ws.roomId = crypto.randomUUID();
                 rooms.set(ws.roomId, new Map());
                 rooms.get(ws.roomId).set(ws.id, ws);
+
+                let joinTimestamp = Date.now();
     
                 ws.send(JSON.stringify({
                     type: "roomJoined",
-                    roomId: ws.roomId
+                    roomId: ws.roomId,
+                    timestamp: joinTimestamp
                 }));
     
                 wss.clients.forEach((client) => {
@@ -101,10 +104,13 @@ wss.on("connection", (ws, req) => {
             if (!ws.roomId) {
                 ws.roomId = received.roomId;
                 rooms.get(ws.roomId).set(ws.id, ws);
-    
+
+                let joinTimestamp = Date.now();
+                
                 ws.send(JSON.stringify({
                     type: "roomJoined",
-                    roomId: ws.roomId
+                    roomId: ws.roomId,
+                    timestamp: joinTimestamp
                 }));
     
                 rooms.get(ws.roomId).forEach((client, clientId) => {
