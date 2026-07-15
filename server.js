@@ -80,6 +80,11 @@ wss.on("connection", (ws, req) => {
                 rooms.set(ws.roomId, new Map());
                 rooms.get(ws.roomId).set(ws.id, ws);
     
+                ws.send(JSON.stringify({
+                    type: "roomJoined",
+                    roomId: ws.roomId
+                }));
+    
                 wss.clients.forEach((client) => {
                     if (client.readyState == WebSocket.OPEN) {
                         client.send(JSON.stringify({
@@ -96,6 +101,11 @@ wss.on("connection", (ws, req) => {
             if (!ws.roomId) {
                 ws.roomId = received.roomId;
                 rooms.get(ws.roomId).set(ws.id, ws);
+    
+                ws.send(JSON.stringify({
+                    type: "roomJoined",
+                    roomId: ws.roomId
+                }));
     
                 rooms.get(ws.roomId).forEach((client, clientId) => {
                     if (clientId !== ws.id && client.readyState == WebSocket.OPEN) {
