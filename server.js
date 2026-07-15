@@ -6,6 +6,29 @@ let wss = new WebSocket.Server({ port: 8080 });
 
 let rooms = new Map();
 
+function handleDisconnect(ws) {
+    const roomId = ws.roomId;
+    const peerId = ws.id;
+
+    if (roomId && rooms.has(roomId)) {
+        let roomMap = rooms.get(roomId);
+        roomMap.delete(peerId);
+
+        if (roomMap.size === 0) {
+            rooms.delete(roomId);
+
+            wss.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        type: "roomClosed",
+                        roomId: roomId
+                    }));
+                }
+            });
+        }
+    }
+}
+
 wss.on("connection", (ws, req) => {
     rooms.forEach((roomMap, roomId) => {
         ws.send(JSON.stringify({
@@ -43,44 +66,54 @@ wss.on("connection", (ws, req) => {
             ws.id = received.id;
 
         } else if (received.type == "createRoom") {
-            ws.roomId = crypto.randomUUID();
-            rooms.set(ws.roomId, new Map());
-            rooms.get(ws.roomId).set(ws.id, ws);
-
-            wss.clients.forEach((client) => {
-                if (client.readyState == WebSocket.OPEN) {
-                    client.send(JSON.stringify({
-                        type: "roomCreated",
-                        roomId: ws.roomId
-                    }));
-                }
-            });
+            if (!ws.id) return;
+            
+            if (!ws.roomId) {
+                ws.roomId = crypto.randomUUID();
+                rooms.set(ws.roomId, new Map());
+                rooms.get(ws.roomId).set(ws.id, ws);
+    
+                wss.clients.forEach((client) => {
+                    if (client.readyState == WebSocket.OPEN) {
+                        client.send(JSON.stringify({
+                            type: "roomCreated",
+                            roomId: ws.roomId
+                        }));
+                    }
+                });
+            }
 
         } else if (received.type == "connectRoom") {
-            ws.roomId = received.roomId;
-            rooms.get(ws.roomId).set(ws.id, ws);
-
-            rooms.get(ws.roomId).forEach((client, clientId) => {
-                if (clientId !== ws.id && client.readyState == WebSocket.OPEN) {
-                    ws.send(JSON.stringify({
-                        type: "peerMessage",
-                        peerMessageType: "role",
-                        role: "initiator",
-                        remoteId: clientId
-                    }));
-
-                    client.send(JSON.stringify({
-                        type: "peerMessage",
-                        peerMessageType: "role",
-                        role: "answerer",
-                        remoteId: ws.id
-                    }));
-                }
-            });
+            if (!ws.id) return;
+            
+            if (!ws.roomId) {
+                ws.roomId = received.roomId;
+                rooms.get(ws.roomId).set(ws.id, ws);
+    
+                rooms.get(ws.roomId).forEach((client, clientId) => {
+                    if (clientId !== ws.id && client.readyState == WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: "peerMessage",
+                            peerMessageType: "role",
+                            role: "initiator",
+                            remoteId: clientId
+                        }));
+    
+                        client.send(JSON.stringify({
+                            type: "peerMessage",
+                            peerMessageType: "role",
+                            role: "answerer",
+                            remoteId: ws.id
+                        }));
+                    }
+                });
+            }
 
         } else if (received.type == "disconnectRoom") {
-            rooms.get(ws.roomId).delete(ws.id);
-            delete ws.roomId;
+            if (ws.roomId && rooms.has(ws.roomId)) {
+                handleDisconnect(ws);
+                delete ws.roomId;
+            }
 
         } else if (received.type == "peerMessage") {
             if (ws.roomId && rooms.has(ws.roomId)) {
@@ -94,38 +127,10 @@ wss.on("connection", (ws, req) => {
     });
 
     ws.on("close", () => {
-        if (ws.roomId && rooms.has(ws.roomId)) {
-            rooms.get(ws.roomId).delete(ws.id);
-            if (rooms.get(ws.roomId).size == 0) {
-                rooms.delete(ws.roomId);
-
-                wss.clients.forEach((client) => {
-                    if (client.readyState == WebSocket.OPEN) {
-                        client.send(JSON.stringify({
-                            type: "roomClosed",
-                            roomId: ws.roomId
-                        }));
-                    }
-                });
-            }
-        }
+        handleDisconnect(ws);
     });
 
     ws.on("error", (err) => {
-        if (ws.roomId && rooms.has(ws.roomId)) {
-            rooms.get(ws.roomId).delete(ws.id);
-            if (rooms.get(ws.roomId).size == 0) {
-                rooms.delete(ws.roomId);
-
-                wss.clients.forEach((client) => {
-                    if (client.readyState == WebSocket.OPEN) {
-                        client.send(JSON.stringify({
-                            type: "roomClosed",
-                            roomId: ws.roomId
-                        }));
-                    }
-                });
-            }
-        }
+        handleDisconnect(ws);
     });
 });
