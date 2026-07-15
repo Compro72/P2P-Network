@@ -6,7 +6,7 @@ let wss = new WebSocket.Server({ port: 8080 });
 
 let rooms = new Map();
 
-function handleDisconnect(ws) {
+function removeFromRoom(ws) {
     const roomId = ws.roomId;
     const peerId = ws.id;
 
@@ -114,7 +114,7 @@ wss.on("connection", (ws, req) => {
             if (!ws.id) return;
 
             if (ws.roomId && rooms.has(ws.roomId)) {
-                handleDisconnect(ws);
+                removeFromRoom(ws);
                 delete ws.roomId;
             }
 
@@ -130,10 +130,10 @@ wss.on("connection", (ws, req) => {
     });
 
     ws.on("close", () => {
-        handleDisconnect(ws);
+        removeFromRoom(ws);
     });
 
     ws.on("error", (err) => {
-        handleDisconnect(ws);
+        removeFromRoom(ws);
     });
 });
