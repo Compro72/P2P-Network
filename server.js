@@ -88,13 +88,20 @@ wss.on("connection", (ws, req) => {
                         }));
                     }
                 });
-
-                let joinTimestamp = Date.now();
-    
+                
                 ws.send(JSON.stringify({
                     type: "roomJoined",
-                    roomId: ws.roomId,
-                    timestamp: joinTimestamp
+                    roomId: ws.roomId
+                }));
+
+                let joinedTime = Date.now();
+                ws.timestamp = joinedTime;
+                
+                ws.send(JSON.stringify({
+                    type: "peerMessage",
+                    peerMessageType: "timestamp",
+                    timestamp: ws.timestamp,
+                    remoteId: ws.id
                 }));
             }
 
@@ -104,8 +111,37 @@ wss.on("connection", (ws, req) => {
             if (!ws.roomId) {
                 ws.roomId = received.roomId;
                 rooms.get(ws.roomId).set(ws.id, ws);
+                
+                ws.send(JSON.stringify({
+                    type: "roomJoined",
+                    roomId: ws.roomId
+                }));
+
+                let joinedTime = Date.now();
+                ws.timestamp = joinedTime;
+                
+                rooms.get(ws.roomId).forEach((client, clientId) => {
+                    if (client.readyState == WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: "peerMessage",
+                            peerMessageType: "timestamp",
+                            timestamp: client.timestamp,
+                            remoteId: clientId
+                        }));
+
+                        if(ws !== client) {
+                            client.send(JSON.stringify({
+                                type: "peerMessage",
+                                peerMessageType: "timestamp",
+                                timestamp: ws.timestamp,
+                                remoteId: ws.id
+                            }));
+                        }
+                    }
+                });
     
                 rooms.get(ws.roomId).forEach((client, clientId) => {
+                    
                     if (clientId !== ws.id && client.readyState == WebSocket.OPEN) {
                         ws.send(JSON.stringify({
                             type: "peerMessage",
@@ -122,14 +158,6 @@ wss.on("connection", (ws, req) => {
                         }));
                     }
                 });
-
-                let joinTimestamp = Date.now();
-                
-                ws.send(JSON.stringify({
-                    type: "roomJoined",
-                    roomId: ws.roomId,
-                    timestamp: joinTimestamp
-                }));
             }
 
         } else if (received.type == "disconnectRoom") {
