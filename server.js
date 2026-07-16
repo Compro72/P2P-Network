@@ -88,11 +88,6 @@ wss.on("connection", (ws, req) => {
                         }));
                     }
                 });
-                
-                ws.send(JSON.stringify({
-                    type: "roomJoined",
-                    roomId: ws.roomId
-                }));
 
                 let joinedTime = Date.now();
                 ws.timestamp = joinedTime;
@@ -103,6 +98,11 @@ wss.on("connection", (ws, req) => {
                     timestamp: ws.timestamp,
                     remoteId: ws.id
                 }));
+                
+                ws.send(JSON.stringify({
+                    type: "roomJoined",
+                    roomId: ws.roomId
+                }));
             }
 
         } else if (received.type == "connectRoom") {
@@ -111,11 +111,6 @@ wss.on("connection", (ws, req) => {
             if (!ws.roomId) {
                 ws.roomId = received.roomId;
                 rooms.get(ws.roomId).set(ws.id, ws);
-                
-                ws.send(JSON.stringify({
-                    type: "roomJoined",
-                    roomId: ws.roomId
-                }));
 
                 let joinedTime = Date.now();
                 ws.timestamp = joinedTime;
@@ -139,6 +134,11 @@ wss.on("connection", (ws, req) => {
                         }
                     }
                 });
+                
+                ws.send(JSON.stringify({
+                    type: "roomJoined",
+                    roomId: ws.roomId
+                }));
     
                 rooms.get(ws.roomId).forEach((client, clientId) => {
                     
