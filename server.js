@@ -5,6 +5,7 @@ let url = require("url");
 let wss = new WebSocket.Server({ port: 8080 });
 
 let rooms = new Map();
+let startedRooms = new Map();
 
 function removeFromRoom(ws) {
     const roomId = ws.roomId;
@@ -47,7 +48,16 @@ wss.on("connection", (ws, req) => {
             return;
         }
 
-        if (received.type == "initId") {
+        if (received.type == "start") {
+            rooms.get(ws.roomId).forEach((client, clientId) => {
+                if (client.readyState == WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        type: "start"
+                    }));
+                }
+            });
+
+        } else if (received.type == "initId") {
             rooms.forEach((roomMap, roomId) => {
                 if (roomMap.has(received.id)) {
                     let oldWs = roomMap.get(received.id);
